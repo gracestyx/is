@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Magic of Disney World</title>
+  <link rel="stylesheet" href="/css/mystyles.css" />
+</head>
+<body>
+
+  <!-- NAVIGATION — links back to your professional pages -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="ai.html">Gordle Game</a>
+  </nav>
+
+  <!-- ON-PAGE ANCHOR: top of page -->
+  <a id="top"></a>
+
+  <!-- DIV 1: HERO -->
+  <div id="hero">
+    <h1>The Magic of Disney World</h1>
+    <p>The Happiest Place On Earth</p>
+  </div>
+
+  <!-- DIV 2: MAIN CONTENT -->
+  <div id="content">
+
+    <h2>Why I Love Disney World</h2>
+    <p>
+      Walt Disney World in Orlando, Florida is more than a theme park. It's a place where
+      imagination becomes reality. Whether it's the thrill of Space Mountain, the wonder of
+      EPCOT's World Showcase, or the nostalgia of Main Street U.S.A., there is something
+      magical around every corner. I've been visiting since I was a kid and the excitement
+      never fades.
+    </p>
+
+    <!-- IMAGE (not from Bootstrap) -->
+    <img
+      src="/assets/img/disneycastle.jpg"
+      alt="Cinderella Castle at Magic Kingdom, Disney World"
+    />
+
+    <hr />
+
+    <h2>The Four Parks</h2>
+    <p>Disney World is made up of four amazing theme parks, each with its own unique lands and attractions:</p>
+
+    <ol>
+      <li>
+        <strong>Magic Kingdom</strong>
+        <ul>
+          <li>Space Mountain</li>
+          <li>Haunted Mansion</li>
+          <li>Pirates of the Caribbean</li>
+          <li>Seven Dwarfs Mine Train</li>
+        </ul>
+      </li>
+      <li>
+        <strong>EPCOT</strong>
+        <ul>
+          <li>Guardians of the Galaxy: Cosmic Rewind</li>
+          <li>Remy's Ratatouille Adventure</li>
+          <li>Test Track</li>
+          <li>World Showcase</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Hollywood Studios</strong>
+        <ul>
+          <li>Star Wars: Rise of the Resistance</li>
+          <li>Tower of Terror</li>
+          <li>Slinky Dog Dash</li>
+          <li>Millennium Falcon: Smugglers Run</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Animal Kingdom</strong>
+        <ul>
+          <li>Avatar Flight of Passage</li>
+          <li>Kilimanjaro Safaris</li>
+          <li>Expedition Everest</li>
+          <li>Na'vi River Journey</li>
+        </ul>
+      </li>
+    </ol>
+
+   
+  </div>
+  <div id="media">
+
+
+    <h2>Watch: Disney World Experience</h2>
+    <div class="video-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/Y5tR4SB12FM"
+        title="Disney World YouTube Video"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <!-- TABLEAU EMBED (Requirement 4 — live interactive viz) -->
+    <h2>Disney World Ride Lengths — Interactive Data</h2>
+    <p>Explore the lengths of rides across all four Disney World parks in this live Tableau visualization.</p>
+
+    <div class='tableauPlaceholder' id='viz1776461240285' style='position: relative'>
+      <noscript>
+        <a href='#'>
+          <img alt='Disney World Ride Lengths'
+               src='https://public.tableau.com/static/images/Wa/WaltDisneyWorldRideLengths/DisneyWorldRideLengths/1_rss.png'
+               style='border: none' />
+        </a>
+      </noscript>
+      <object class='tableauViz' style='display:none;'>
+        <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+        <param name='embed_code_version' value='3' />
+        <param name='site_root' value='' />
+        <param name='name' value='WaltDisneyWorldRideLengths/DisneyWorldRideLengths' />
+        <param name='tabs' value='no' />
+        <param name='toolbar' value='yes' />
+        <param name='static_image' value='https://public.tableau.com/static/images/Wa/WaltDisneyWorldRideLengths/DisneyWorldRideLengths/1.png' />
+        <param name='animate_transition' value='yes' />
+        <param name='display_static_image' value='yes' />
+        <param name='display_spinner' value='yes' />
+        <param name='display_overlay' value='yes' />
+        <param name='display_count' value='yes' />
+        <param name='language' value='en-US' />
+      </object>
+    </div>
+    <script type='text/javascript'>
+      var divElement = document.getElementById('viz1776461240285');
+      var vizElement = divElement.getElementsByTagName('object')[0];
+      if (divElement.offsetWidth > 800) {
+        vizElement.style.width = '1000px';
+        vizElement.style.height = '827px';
+      } else if (divElement.offsetWidth > 500) {
+        vizElement.style.width = '1000px';
+        vizElement.style.height = '827px';
+      } else {
+        vizElement.style.width = '100%';
+        vizElement.style.height = '1177px';
+      }
+      var scriptElement = document.createElement('script');
+      scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+      vizElement.parentNode.insertBefore(scriptElement, vizElement);
+    </script>
+
+  </div>
+    <a class="anchor-link" href="#top">&#8593; Back to Top</a>
+
+  <footer>
+    <p>&copy; 2026 The Magic of Disney World</p>
+  </footer>
+
+</body>
+</html>

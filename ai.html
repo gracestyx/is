@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GORDLE — Word Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3e;
+    --border2: #3a3a5e;
+    --text: #e8e8f0;
+    --muted: #6a6a8a;
+    --accent: #7c6af7;
+    --accent2: #a89cff;
+    --green: #3ddc84;
+    --green-dim: #1a4a2e;
+    --amber: #f5a623;
+    --amber-dim: #3d2a0a;
+    --absent: #2a2a3e;
+    --absent-text: #5a5a7a;
+    --scanline: rgba(255,255,255,0.015);
+    --glow: 0 0 20px rgba(124,106,247,0.3);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124,106,247,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 32px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  #header {
+    width: 100%;
+    padding: 16px 0 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  #title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    text-shadow: 0 0 30px rgba(124,106,247,0.6), 0 0 60px rgba(124,106,247,0.2);
+    line-height: 1;
+  }
+
+  #title span { color: var(--accent2); }
+
+  #header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .stat-pill {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 8px;
+  }
+  .stat-pill b { color: var(--accent2); font-weight: 400; }
+
+  #mode-bar {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .mode-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .mode-btn:hover { border-color: var(--border2); color: var(--text); }
+  .mode-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(124,106,247,0.4);
+  }
+
+  #theme-line {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    padding: 5px 14px;
+    width: 100%;
+    text-align: center;
+    display: none;
+  }
+  #theme-line.show { display: block; }
+  #theme-line span { color: var(--accent2); }
+
+  #board {
+    display: grid;
+    grid-template-rows: repeat(6, 58px);
+    gap: 5px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(5, 58px);
+    gap: 5px;
+  }
+
+  .tile {
+    width: 58px;
+    height: 58px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    background: var(--surface);
+    position: relative;
+    transition: border-color 0.1s;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .tile.filled { border-color: var(--border2); animation: pop 0.1s ease; }
+
+  .tile.correct {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 14px rgba(61,220,132,0.25), inset 0 0 14px rgba(61,220,132,0.05);
+  }
+
+  .tile.present {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+    box-shadow: 0 0 14px rgba(245,166,35,0.25), inset 0 0 14px rgba(245,166,35,0.05);
+  }
+
+  .tile.absent {
+    background: var(--absent);
+    border-color: var(--border);
+    color: var(--absent-text);
+  }
+
+  .tile.reveal { animation: flip 0.5s ease forwards; }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.14); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes flip {
+    0% { transform: rotateX(0deg) scale(1); }
+    50% { transform: rotateX(-90deg) scale(0.95); }
+    100% { transform: rotateX(0deg) scale(1); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-7px); }
+    40%, 80% { transform: translateX(7px); }
+  }
+
+  @keyframes bounce-win {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-14px); }
+    60% { transform: translateY(-6px); }
+  }
+
+  .row.shake { animation: shake 0.4s ease; }
+  .tile.bounce { animation: bounce-win 0.6s ease; }
+
+  #message-wrap {
+    min-height: 30px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  #message {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 5px 16px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    box-shadow: 0 0 12px rgba(124,106,247,0.2);
+  }
+
+  #message.visible { opacity: 1; }
+  #message.error {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+    box-shadow: 0 0 12px rgba(255,107,107,0.2);
+  }
+
+  #keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .kb-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .key {
+    height: 52px;
+    min-width: 36px;
+    padding: 0 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+    user-select: none;
+    letter-spacing: 0.03em;
+  }
+
+  .key:hover:not(.correct):not(.present):not(.absent) {
+    border-color: var(--border2);
+    background: var(--surface);
+  }
+
+  .key:active { transform: scale(0.94); }
+  .key.wide { min-width: 56px; font-size: 11px; letter-spacing: 0.04em; }
+
+  .key.correct {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 8px rgba(61,220,132,0.2);
+  }
+
+  .key.present {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+    box-shadow: 0 0 8px rgba(245,166,35,0.2);
+  }
+
+  .key.absent {
+    background: var(--absent);
+    border-color: var(--border);
+    color: var(--absent-text);
+  }
+
+  #end-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 18px 20px;
+    box-shadow: var(--glow);
+  }
+
+  #end-panel.show { display: flex; }
+
+  #end-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.15em;
+    color: var(--accent2);
+    text-shadow: 0 0 20px rgba(124,106,247,0.5);
+  }
+
+  #end-word {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  #end-word b { color: var(--text); font-weight: 400; }
+
+  #end-def {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+    border-left: 2px solid var(--accent);
+    padding-left: 10px;
+    max-width: 340px;
+  }
+
+  #end-stats { display: flex; gap: 16px; }
+
+  .end-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 14px;
+  }
+
+  .end-stat-n {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--accent2);
+    line-height: 1;
+  }
+
+  .end-stat-l {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #new-game-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    padding: 10px 28px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 3px;
+    box-shadow: 0 0 16px rgba(124,106,247,0.4);
+    transition: all 0.15s;
+  }
+
+  #new-game-btn:hover {
+    background: var(--accent2);
+    box-shadow: 0 0 22px rgba(124,106,247,0.6);
+  }
+
+  #lives-bar { display: flex; gap: 5px; align-items: center; }
+
+  .life-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(124,106,247,0.5);
+    transition: all 0.3s;
+  }
+  .life-dot.used { background: var(--absent); box-shadow: none; }
+
+  #hint-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  #hint-btn:hover { border-color: var(--amber); color: var(--amber); }
+  #hint-btn.used { opacity: 0.4; cursor: not-allowed; }
+
+  #ticker {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+
+  #ticker-inner { display: inline-block; animation: scroll 22s linear infinite; }
+
+  @keyframes scroll {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="header">
+    <div>
+      <div id="title">GORDLE</div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em;margin-top:2px;">WORD DECRYPTION TERMINAL</div>
+    </div>
+    <div id="header-right">
+      <div class="stat-pill">STREAK <b id="streak-val">0</b></div>
+      <div class="stat-pill">WINS <b id="wins-val">0</b></div>
+      <div class="stat-pill">PLAYED <b id="played-val">0</b></div>
+    </div>
+  </div>
+
+  <div id="mode-bar">
+    <button class="mode-btn active" onclick="setMode('normal')">NORMAL</button>
+    <button class="mode-btn" onclick="setMode('themed')">THEMED</button>
+    <button class="mode-btn" onclick="setMode('hard')">HARD MODE</button>
+  </div>
+
+  <div id="theme-line"></div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+    <div id="lives-bar"></div>
+    <button id="hint-btn" onclick="useHint()">USE HINT</button>
+  </div>
+
+  <div id="board"></div>
+
+  <div id="message-wrap"><div id="message"></div></div>
+
+  <div id="end-panel">
+    <div id="end-title"></div>
+    <div id="end-word"></div>
+    <div id="end-def"></div>
+    <div id="end-stats">
+      <div class="end-stat"><div class="end-stat-n" id="es-streak">0</div><div class="end-stat-l">Streak</div></div>
+      <div class="end-stat"><div class="end-stat-n" id="es-wins">0</div><div class="end-stat-l">Wins</div></div>
+      <div class="end-stat"><div class="end-stat-n" id="es-played">0</div><div class="end-stat-l">Played</div></div>
+    </div>
+    <button id="new-game-btn" onclick="newGame()">[ NEW WORD ]</button>
+  </div>
+
+  <div id="keyboard"></div>
+
+  <div id="ticker">
+    <div id="ticker-inner">GORDLE v2.4 // DECRYPT THE HIDDEN WORD // GREEN = CORRECT POSITION // AMBER = WRONG POSITION // GRAY = NOT IN WORD // GOOD LUCK, AGENT //</div>
+  </div>
+
+</div>
+
+<script>
+const WORDS = {
+  normal: [
+    "CRANE","SLATE","AUDIO","STARE","AROSE","LEAST","SNARE","TRAIL","GROAN","PLANT",
+    "BOUND","CRAVE","DRAFT","FLAME","GRANT","HALVE","IVORY","JOLTS","KNAVE","LANCE",
+    "MANOR","NOVEL","OAKEN","PRIDE","QUART","RAVEN","SWAMP","THORN","USURP","VALVE",
+    "WALTZ","YACHT","ZONAL","BLAZE","CHESS","DERBY","EXULT","FANCY","GAVEL","HAVOC",
+    "INDEX","JOUST","KARMA","LOFTY","MISTY","NAIVE","OMEGA","PRANK","QUEST","RIVET",
+    "SCOUT","TIMID","ULTRA","VENOM","WRECK","XENON","YEARN","ZILCH","ABBOT","BIRCH",
+    "CARGO","DELTA","EVOKE","FLAIR","GRAZE","HELIX","IRONY","KNEEL","LUSTY",
+    "MAGIC","OCTET","PLAZA","QUALM","REBUS","SMIRK","TABOO","VIGIL",
+    "BRISK","CLOWN","DWELT","EMBER","FJORD",
+    "GHOST","HINGE","JOKER","KNACK","LYRIC","MIRTH","NOTCH","OPTIC","PIXEL",
+    "QUOTA","RODEO","SWIRL","TRAWL","UNIFY","WINCH","YODEL","ZEBRA",
+    "ABHOR","BATCH","CLOCK","DRAIN","EPOCH","FLUTE","GRIND","HOIST","IDEAL","JELLY"
+  ],
+  themed: [
+    {theme:"OUTER SPACE", words:["ORBIT","COMET","LUNAR","SOLAR","PROBE","ROVER","LIGHT","NOVA","VOIDS","OZONE"]},
+    {theme:"THE OCEAN",   words:["CORAL","WAVES","BRINE","TIDAL","SHOAL","DEPTH","GALES","BUOYS","SQUID","ALGAE"]},
+    {theme:"ANCIENT ROME",words:["FORUM","CURIA","SLAVE","SWORD","EAGLE","TITAN","PAGAN","MURAL","ALTAR","SPEAR"]},
+    {theme:"TECH / CYBER",words:["PIXEL","LOGIC","VIRUS","CACHE","PROXY","DEBUG","TOKEN","ARRAY","QUERY","STACK"]},
+    {theme:"THE WILD WEST",words:["RANCH","RODEO","GRITS","LASSO","BRAND","SPURS","POSSE","TRAIL","COYOT","BANJO"]},
+  ]
+};
+
+const DEFS = {
+  CRANE:"A large wading bird — or to stretch your neck to see something.",
+  SLATE:"Fine-grained rock used for writing, or a clean, blank record.",
+  ORBIT:"The curved path one object takes around another in space.",
+  PIXEL:"The smallest single unit of a digital image or display.",
+  LOGIC:"Reasoning carried out according to strict, valid principles.",
+  VIRUS:"An infective microscopic agent that replicates inside living cells.",
+  CACHE:"A hidden or inaccessible store of things kept for later use.",
+  PROXY:"A person or agent authorized to act on behalf of another.",
+  CORAL:"A hard stony substance secreted by colonies of marine polyps.",
+  WAVES:"Long ridges of water rolling toward and onto the shore.",
+  FORUM:"A public meeting place or medium for open discussion.",
+  COMET:"A small icy body that grows a luminous tail near the sun.",
+  SOLAR:"Of or relating to the sun.",
+  PROBE:"A spacecraft sent to explore space beyond Earth's orbit.",
+  GRIND:"To reduce something to small particles by crushing.",
+  HOIST:"To raise something by means of ropes and pulleys.",
+  EPOCH:"A distinct period of time marked by notable events.",
+  FLUTE:"A high-pitched woodwind instrument played by blowing across a hole.",
+  ABHOR:"To regard something with disgust and hatred.",
+  GHOST:"An apparition or spirit of a dead person.",
+  FJORD:"A long narrow sea inlet between tall cliffs.",
+  EMBER:"A small piece of burning coal or wood in a dying fire.",
+  JOKER:"A person who tells jokes, or the wild card in a deck.",
+  ZEBRA:"An African wild horse with black-and-white stripes.",
+  YODEL:"To sing with rapid alternation between chest and head voice.",
+};
+
+const KB = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['ENTER','Z','X','C','V','B','N','M','⌫']
+];
+
+let S = {
+  word:'', guesses:[], current:'', gameOver:false,
+  mode:'normal', themeHint:'', hintUsed:false,
+  stats:{streak:0,wins:0,played:0},
+  hardConstraints:[]
+};
+
+function init() {
+  const saved = localStorage.getItem('gordle_stats');
+  if (saved) try { S.stats = JSON.parse(saved); } catch(e){}
+  buildKeyboard();
+  newGame();
+}
+
+function setMode(m) {
+  S.mode = m;
+  document.querySelectorAll('.mode-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['normal','themed','hard'][i] === m);
+  });
+  newGame();
+}
+
+function pickWord() {
+  if (S.mode === 'themed') {
+    const pack = WORDS.themed[Math.floor(Math.random() * WORDS.themed.length)];
+    S.themeHint = pack.theme;
+    return pack.words[Math.floor(Math.random() * pack.words.length)].toUpperCase();
+  }
+  S.themeHint = '';
+  return WORDS.normal[Math.floor(Math.random() * WORDS.normal.length)];
+}
+
+function newGame() {
+  S.word = pickWord();
+  S.guesses = []; S.current = ''; S.gameOver = false;
+  S.hintUsed = false; S.hardConstraints = [];
+  buildBoard(); buildLives(); resetKB(); hideEnd(); clearMsg();
+  const tl = document.getElementById('theme-line');
+  if (S.mode === 'themed') {
+    tl.innerHTML = `THEME: <span>${S.themeHint}</span>`;
+    tl.classList.add('show');
+  } else { tl.classList.remove('show'); }
+  document.getElementById('hint-btn').classList.remove('used');
+  updateStats();
+}
+
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (let r = 0; r < 6; r++) {
+    const row = document.createElement('div');
+    row.className = 'row'; row.id = `row-${r}`;
+    for (let c = 0; c < 5; c++) {
+      const t = document.createElement('div');
+      t.className = 'tile'; t.id = `tile-${r}-${c}`;
+      row.appendChild(t);
+    }
+    board.appendChild(row);
+  }
+}
+
+function buildLives() {
+  const bar = document.getElementById('lives-bar');
+  bar.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const d = document.createElement('div');
+    d.className = 'life-dot'; d.id = `dot-${i}`;
+    bar.appendChild(d);
+  }
+}
+
+function buildKeyboard() {
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  KB.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'kb-row';
+    row.forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'key' + (k==='ENTER'||k==='⌫'?' wide':'');
+      btn.textContent = k; btn.id = `key-${k}`;
+      btn.addEventListener('click', () => handleKey(k));
+      div.appendChild(btn);
+    });
+    kb.appendChild(div);
+  });
+}
+
+function resetKB() {
+  document.querySelectorAll('.key').forEach(k => {
+    k.className = 'key' + (k.textContent==='ENTER'||k.textContent==='⌫'?' wide':'');
+  });
+}
+
+function handleKey(k) {
+  if (S.gameOver) return;
+  if (k==='⌫'||k==='Backspace') {
+    if (S.current.length > 0) { S.current = S.current.slice(0,-1); updateRow(); }
+  } else if (k==='ENTER'||k==='Enter') {
+    submitGuess();
+  } else if (/^[A-Za-z]$/.test(k) && S.current.length < 5) {
+    S.current += k.toUpperCase(); updateRow();
+  }
+}
+
+function updateRow() {
+  const r = S.guesses.length;
+  for (let c = 0; c < 5; c++) {
+    const t = document.getElementById(`tile-${r}-${c}`);
+    const l = S.current[c] || '';
+    t.textContent = l;
+    t.className = 'tile' + (l ? ' filled' : '');
+  }
+}
+
+function submitGuess() {
+  const r = S.guesses.length;
+  if (S.current.length < 5) {
+    showMsg('NOT ENOUGH LETTERS', true);
+    shake(r); return;
+  }
+  if (S.mode === 'hard') {
+    for (const c of S.hardConstraints) {
+      if (c.type==='correct' && S.current[c.pos]!==c.letter) {
+        showMsg(`POSITION ${c.pos+1} MUST BE ${c.letter}`, true); return;
+      }
+      if (c.type==='present' && !S.current.includes(c.letter)) {
+        showMsg(`MUST USE LETTER ${c.letter}`, true); return;
+      }
+    }
+  }
+  const guess = S.current;
+  S.guesses.push(guess); S.current = '';
+  const result = score(guess);
+  if (S.mode === 'hard') {
+    result.forEach((res,i) => {
+      if (res==='correct') S.hardConstraints.push({type:'correct',pos:i,letter:guess[i]});
+      else if (res==='present') S.hardConstraints.push({type:'present',letter:guess[i]});
+    });
+    S.hardConstraints = [...new Map(S.hardConstraints.map(c=>[JSON.stringify(c),c])).values()];
+  }
+  revealRow(r, guess, result, () => {
+    document.getElementById(`dot-${r}`).classList.add('used');
+    updateKB(guess, result);
+    const won = result.every(x => x==='correct');
+    if (won) {
+      S.gameOver = true; S.stats.wins++; S.stats.streak++; S.stats.played++;
+      saveStats();
+      setTimeout(() => { winBounce(r); showEnd(true); }, 300);
+    } else if (S.guesses.length >= 6) {
+      S.gameOver = true; S.stats.streak = 0; S.stats.played++;
+      saveStats();
+      setTimeout(() => showEnd(false), 300);
+    }
+    updateStats();
+  });
+}
+
+function score(guess) {
+  const res = Array(5).fill('absent');
+  const wa = S.word.split(''), ga = guess.split(''), used = Array(5).fill(false);
+  for (let i = 0; i < 5; i++) {
+    if (ga[i]===wa[i]) { res[i]='correct'; used[i]=true; ga[i]=null; }
+  }
+  for (let i = 0; i < 5; i++) {
+    if (res[i]==='correct') continue;
+    for (let j = 0; j < 5; j++) {
+      if (!used[j] && ga[i]===wa[j]) { res[i]='present'; used[j]=true; break; }
+    }
+  }
+  return res;
+}
+
+function revealRow(r, guess, result, cb) {
+  for (let c = 0; c < 5; c++) {
+    const t = document.getElementById(`tile-${r}-${c}`);
+    setTimeout(() => {
+      t.classList.add('reveal');
+      setTimeout(() => {
+        t.classList.remove('reveal');
+        t.className = `tile ${result[c]}`;
+        t.textContent = guess[c];
+      }, 250);
+    }, c * 120);
+  }
+  setTimeout(cb, 5 * 120 + 300);
+}
+
+function winBounce(r) {
+  for (let c = 0; c < 5; c++) {
+    const t = document.getElementById(`tile-${r}-${c}`);
+    setTimeout(() => t.classList.add('bounce'), c * 80);
+    setTimeout(() => t.classList.remove('bounce'), c * 80 + 600);
+  }
+}
+
+function updateKB(guess, result) {
+  const pri = {correct:3, present:2, absent:1};
+  for (let i = 0; i < 5; i++) {
+    const key = document.getElementById(`key-${guess[i]}`);
+    if (!key) continue;
+    const cur = key.className.match(/correct|present|absent/)?.[0] || '';
+    if (!cur || pri[result[i]] > pri[cur])
+      key.className = `key ${result[i]}` + (key.textContent==='ENTER'||key.textContent==='⌫'?' wide':'');
+  }
+}
+
+function shake(r) {
+  const row = document.getElementById(`row-${r}`);
+  row.classList.add('shake');
+  setTimeout(() => row.classList.remove('shake'), 400);
+}
+
+function useHint() {
+  if (S.hintUsed || S.gameOver) return;
+  if (S.guesses.length === 0) { showMsg('MAKE A GUESS FIRST', true); return; }
+  const letters = [...new Set(S.word.split(''))];
+  const known = S.guesses.flatMap(g => g.split('').filter((l,i) => score(g)[i]==='correct' && l===S.word[i]));
+  const unknown = letters.filter(l => !known.includes(l));
+  const hint = unknown.length > 0 ? unknown[Math.floor(Math.random()*unknown.length)] : letters[0];
+  showMsg(`HINT: WORD CONTAINS "${hint}"`, false);
+  S.hintUsed = true;
+  document.getElementById('hint-btn').classList.add('used');
+}
+
+function showMsg(txt, err) {
+  const m = document.getElementById('message');
+  m.textContent = txt;
+  m.className = 'visible' + (err ? ' error' : '');
+  clearTimeout(window._mt);
+  window._mt = setTimeout(clearMsg, 2400);
+}
+
+function clearMsg() { document.getElementById('message').className = ''; }
+
+function showEnd(won) {
+  const p = document.getElementById('end-panel');
+  p.classList.add('show');
+  const titles = won
+    ? ['DECRYPTED!','SIGNAL FOUND!','CRACKED IT!','NICE WORK, AGENT!','SOLID READ.','BARELY MADE IT.']
+    : ['TRANSMISSION LOST','SIGNAL CORRUPTED','DECRYPTION FAILED'];
+  document.getElementById('end-title').textContent = won
+    ? titles[Math.min(S.guesses.length-1, titles.length-1)]
+    : titles[Math.floor(Math.random()*titles.length)];
+  document.getElementById('end-word').innerHTML = `THE WORD WAS: <b>${S.word}</b>`;
+  document.getElementById('end-def').textContent = DEFS[S.word] || 'A five-letter word in the English language.';
+  document.getElementById('es-streak').textContent = S.stats.streak;
+  document.getElementById('es-wins').textContent = S.stats.wins;
+  document.getElementById('es-played').textContent = S.stats.played;
+}
+
+function hideEnd() { document.getElementById('end-panel').classList.remove('show'); }
+
+function updateStats() {
+  document.getElementById('streak-val').textContent = S.stats.streak;
+  document.getElementById('wins-val').textContent = S.stats.wins;
+  document.getElementById('played-val').textContent = S.stats.played;
+}
+
+function saveStats() { localStorage.setItem('gordle_stats', JSON.stringify(S.stats)); }
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Backspace') handleKey('Backspace');
+  else if (e.key === 'Enter') handleKey('Enter');
+  else if (/^[a-zA-Z]$/.test(e.key)) handleKey(e.key.toUpperCase());
+});
+
+init();
+</script>
+</body>
+</html>

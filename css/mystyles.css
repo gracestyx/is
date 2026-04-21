@@ -1,0 +1,141 @@
+
+body {
+  background-color: #0a1628;
+  font-family: 'Georgia', serif;
+  color: #e8e8e8;
+  margin: 0;
+  padding: 0;
+}
+
+
+h1, h2, h3 {
+  font-family: 'Arial', sans-serif;
+  color: #f9d71c;
+}
+
+
+a {
+  color: #63b3ed;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #f9d71c;
+}
+
+
+nav {
+  background-color: #1a2a4a;
+  padding: 14px 28px;
+  display: flex;
+  gap: 24px;
+  border-bottom: 2px solid #f9d71c;
+}
+
+nav a {
+  color: #ffffff;
+  font-family: 'Arial', sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #f9d71c;
+  text-decoration: none;
+}
+
+/* ---- Three Required Divs ---- */
+
+/* Div 1: Hero */
+#hero {
+  background-color: #1a2a4a;
+  text-align: center;
+  padding: 70px 20px 50px;
+  border-bottom: 3px solid #f9d71c;
+}
+
+#hero h1 {
+  font-size: 3em;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+#hero p {
+  font-size: 1.2em;
+  color: #cccccc;
+  font-style: italic;
+}
+
+/* Div 2: Main Content */
+#content {
+  max-width: 880px;
+  margin: 40px auto;
+  padding: 0 28px;
+  line-height: 1.9;
+}
+
+#content img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 3px solid #f9d71c;
+}
+
+/* Div 3: Media */
+#media {
+  max-width: 880px;
+  margin: 40px auto;
+  padding: 0 28px 60px;
+}
+
+/* Video responsive wrapper */
+.video-wrap {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  margin-bottom: 48px;
+  border-radius: 10px;
+  border: 3px solid #f9d71c;
+}
+
+.video-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Lists */
+ol {
+  padding-left: 28px;
+  line-height: 2.2;
+}
+
+ul {
+  padding-left: 24px;
+  line-height: 2;
+  color: #cccccc;
+}
+
+/* Footer */
+footer {
+  background-color: #1a2a4a;
+  text-align: center;
+  padding: 24px;
+  color: #888888;
+  font-size: 13px;
+  border-top: 2px solid #f9d71c;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Anchor jump link */
+.anchor-link {
+  display: inline-block;
+  margin: 12px 0;
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+}
